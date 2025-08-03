@@ -58,6 +58,28 @@
         #filter-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 1rem; }
         .filter-checkbox { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; }
         .filter-checkbox input { accent-color: var(--accent); }
+        /* Estilo para el campo de búsqueda */
+        #search-service-input {
+            width: auto; /* Permite que se ajuste */
+            min-width: 200px;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
 
         /* --- Daily View --- */
         #daily-view-container .calendar-scroll-container {
@@ -111,10 +133,48 @@
         .travel-block.status-Esperando-Repuestos { background-color: rgba(122, 162, 247, 0.3); }
         .travel-block.status-Otros { background-color: rgba(65, 72, 104, 0.3); }
         
+        /* --- NUEVOS COLORES PASTEL PARA TIPOS DE SERVICIO (PALETA SUAVE) --- */
+        /* Vista Diaria - Color de Fondo */
+        .event-block.type-Canal-Tradicional { background-color: #B0E0E6; } /* PowderBlue */
+        .event-block.type-Proyeccion { background-color: #98FB98; } /* PaleGreen */
+        .event-block.type-Retail-Mantencion { background-color: #F8BBD0; } /* Pink (Light) */
+        .event-block.type-Retail-Asistencia { background-color: #FFECB3; } /* Light Yellow */
+        .event-block.type-Retail-Repuestos { background-color: #E6E6FA; } /* Lavender */
+        .event-block.type-Post-Venta { background-color: #C1E1C1; } /* Light Green */
+        .event-block.type-Montaje { background-color: #FFE0B2; } /* PeachPuff */
+
+        /* Bloques de Traslado - Vista Diaria (Versiones transparentes de los colores de fondo anteriores) */
+        .travel-block.type-Canal-Tradicional { background-color: rgba(176, 224, 230, 0.3); }
+        .travel-block.type-Proyeccion { background-color: rgba(152, 251, 152, 0.3); }
+        .travel-block.type-Retail-Mantencion { background-color: rgba(255, 250, 205, 0.3); }
+        .travel-block.type-Retail-Asistencia { background-color: rgba(255, 182, 193, 0.3); }
+        .travel-block.type-Retail-Repuestos { background-color: rgba(221, 160, 221, 0.3); }
+        .travel-block.type-Post-Venta { background-color: rgba(193, 225, 193, 0.3); }
+        .travel-block.type-Montaje { background-color: rgba(255, 218, 185, 0.3); }
+
+        /* Ajustes para Tema Claro para mejor contraste (opcional, pero recomendado) */
+        [data-theme="light"] .event-block.type-Canal-Tradicional { background-color: #ADD8E6; } /* LightBlue */
+        [data-theme="light"] .event-block.type-Proyeccion { background-color: #9ACD32; } /* YellowGreen */
+        [data-theme="light"] .event-block.type-Retail-Mantencion { background-color: #F0E68C; } /* Khaki */
+        [data-theme="light"] .event-block.type-Retail-Asistencia { background-color: #F08080; } /* LightCoral */
+        [data-theme="light"] .event-block.type-Retail-Repuestos { background-color: #C6A2E8; } /* Slightly darker purple for contrast */
+        [data-theme="light"] .event-block.type-Post-Venta { background-color: #87CEFA; } /* LightSkyBlue */
+        [data-theme="light"] .event-block.type-Montaje { background-color: #F4A460; } /* SandyBrown */
+
+        [data-theme="light"] .travel-block.type-Canal-Tradicional { background-color: rgba(173, 216, 230, 0.3); }
+        [data-theme="light"] .travel-block.type-Proyeccion { background-color: rgba(154, 205, 50, 0.2); }
+        [data-theme="light"] .travel-block.type-Retail-Mantencion { background-color: rgba(240, 230, 140, 0.2); }
+        [data-theme="light"] .travel-block.type-Retail-Asistencia { background-color: rgba(240, 128, 128, 0.2); }
+        [data-theme="light"] .travel-block.type-Retail-Repuestos { background-color: rgba(198, 162, 232, 0.2); }
+        [data-theme="light"] .travel-block.type-Post-Venta { background-color: rgba(135, 206, 250, 0.2); }
+        [data-theme="light"] .travel-block.type-Montaje { background-color: rgba(244, 164, 96, 0.2); }
+        /* --- FIN NUEVOS COLORES PASTEL --- */
+
+
         /* --- New Weekly View --- */
         .week-grid-container {
             display: grid;
-            grid-template-columns: 150px repeat(7, 1fr); /* Technicians | 7 Days (equal width) */
+            grid-template-columns: 150px repeat(7, 1fr); /* Técnicos | 7 Días (ancho igual) */
             border: 1px solid var(--border-color);
             border-radius: 12px;
             overflow: auto; 
@@ -139,11 +199,15 @@
         .week-grid-day-cell {
             min-height: 100px;
             padding: 0.5rem;
-            min-width: 0; /* CRUCIAL FIX: Allows columns to shrink and respect grid sizing */
+            min-width: 0; /* CRUCIAL FIX: Permite que las columnas se encojan y respeten el tamaño de la cuadrícula */
         }
         .week-event-item {
-            background-color: var(--bg-tertiary);
-            border-left: 5px solid var(--text-secondary); /* Default border color */
+            background-color: var(--bg-tertiary); /* Color de fondo base, se mantiene */
+            /* ¡CORRECCIÓN CLAVE AQUÍ! La regla de color del borde izquierdo para los tipos
+               de servicio específicos debe ser más específica para sobrescribir esto.
+               La reubicación de las reglas type- al final de esta sección de CSS
+               o el uso de !important (si la reubicación no funciona) es crucial. */
+            border-left: 5px solid var(--text-secondary); /* Color de borde por defecto si no hay tipo */
             padding: 0.4rem 0.6rem;
             border-radius: 4px;
             margin-bottom: 0.5rem;
@@ -170,22 +234,96 @@
             color: var(--text-secondary);
             margin-top: 0.2rem;
         }
+        /* Estas clases de estado siguen siendo importantes para el color de borde,
+           pero las clases de tipo de servicio deben tener más prioridad. */
         .week-event-item.status-Confirmado { border-left-color: var(--success); }
         .week-event-item.status-Pendiente { border-left-color: var(--pending); }
         .week-event-item.status-Esperando-Repuestos { border-left-color: var(--in-progress); }
         
-        /* --- Modal --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity var(--transition-speed); }
+        /* ¡LAS REGLAS DE COLOR POR TIPO DE SERVICIO PARA LA VISTA SEMANAL DEBEN IR AQUÍ ABAJO
+           para asegurar que tengan mayor especificidad o se carguen después de las genéricas! */
+        /* Vista Semanal - Color de Borde Izquierdo */
+        /* Hacemos la regla más específica usando 'body[data-theme="dark"]' o 'body[data-theme="light"]'
+           y el tipo de clase. Esto le da prioridad. */
+        body[data-theme="dark"] .week-event-item.type-Canal-Tradicional { border-left-color: #AEC6CF !important; } /* PowderBlue */
+        body[data-theme="dark"] .week-event-item.type-Proyeccion { border-left-color: #B2DFDB !important; } /* Aquamarine */
+        body[data-theme="dark"] .week-event-item.type-Retail-Mantencion { border-left-color: #F8BBD0 !important; } /* Pink (Light) */
+        body[data-theme="dark"] .week-event-item.type-Retail-Asistencia { border-left-color: #FFECB3 !important; } /* Light Yellow */
+        body[data-theme="dark"] .week-event-item.type-Retail-Repuestos { border-left-color: #E6E6FA !important; } /* Lavender */
+        body[data-theme="dark"] .week-event-item.type-Post-Venta { border-left-color: #C1E1C1 !important; } /* Light Green */
+        body[data-theme="dark"] .week-event-item.type-Montaje { border-left-color: #FFE0B2 !important; } /* PeachPuff */
+
+        /* Ajustes de Tema Claro para bordes semanales (¡también más específicos!) */
+        body[data-theme="light"] .week-event-item.type-Canal-Tradicional { border-left-color: #ADD8E6 !important; }
+        body[data-theme="light"] .week-event-item.type-Proyeccion { border-left-color: #9ACD32 !important; }
+        body[data-theme="light"] .week-event-item.type-Retail-Mantencion { border-left-color: #F0E68C !important; }
+        body[data-theme="light"] .week-event-item.type-Retail-Asistencia { border-left-color: #F08080 !important; }
+        body[data-theme="light"] .week-event-item.type-Retail-Repuestos { border-left-color: #C6A2E8 !important; }
+        body[data-theme="light"] .week-event-item.type-Post-Venta { border-left-color: #87CEFA !important; }
+        body[data-theme="light"] .week-event-item.type-Montaje { border-left-color: #FFA07A !important; }
+        
+        /* --- FIN DE LAS REGLAS DE COLOR POR TIPO DE SERVICIO PARA LA VISTA SEMANAL --- */
+
+
+        /* --- Modal Corrections --- */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--modal-bg); 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 1000; 
+            opacity: 0; visibility: hidden; 
+            transition: opacity var(--transition-speed); 
+            overflow-y: auto; /* Permite scroll del overlay si el modal es muy grande */
+        }
         .modal-overlay.visible { opacity: 1; visibility: visible; }
-        .modal-container { background: var(--modal-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 16px; width: 90%; max-width: 800px; padding: 2rem; transform: scale(0.9); transition: transform var(--transition-speed); }
+        
+        .modal-container { 
+            background: var(--modal-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 16px; 
+            width: 90%; /* Ancho base del modal */
+            max-width: 800px; /* Ancho máximo para pantallas grandes */
+            max-height: 90vh; /* Altura máxima para el modal, usa 'vh' para viewport height */
+            padding: 2rem; 
+            transform: scale(0.9); 
+            transition: transform var(--transition-speed); 
+            overflow-y: auto; /* IMPORTANTE: Permite scroll dentro del contenido del modal */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); /* Sombra para destacarlo */
+        }
+        /* Eliminar backdrop-filter si causa problemas visuales con el scroll */
+        .modal-container { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
         .modal-overlay.visible .modal-container { transform: scale(1); }
+        
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem; }
         .modal-header h2 { margin: 0; color: var(--accent); }
         .modal-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; padding: 0; }
-        .modal-content .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
+        
+        .modal-content .detail-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 1.25rem; 
+        }
         .modal-content .detail-item strong { display: block; color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.875rem; text-transform: uppercase; }
         .modal-content .detail-item span { color: var(--text-primary); font-size: 1rem; }
         .modal-content .full-width { grid-column: 1 / -1; }
+
+        /* Media queries para el modal en pantallas pequeñas */
+        @media (max-width: 768px) {
+            .modal-container {
+                width: 95%; /* Un poco más de ancho en móvil */
+                max-width: none; /* No restringir el max-width en móviles */
+                padding: 1rem; /* Menos padding */
+                margin: 10px; /* Pequeño margen para no pegarse a los bordes */
+            }
+            .modal-content .detail-grid {
+                grid-template-columns: 1fr; /* Una columna para el grid en móviles */
+                gap: 0.8rem; /* Menos espacio entre ítems */
+            }
+            .search-action-buttons {
+                flex-direction: column; /* Apilar botones de búsqueda en móvil */
+            }
+        }
     </style>
 </head>
 <body>
@@ -215,7 +353,21 @@
                     <div id="filter-options" style="display: none;">
                         </div>
                 </div>
-            </div>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <label for="search-service-input" style="display: none;">Buscar Servicio</label>
+                    <input type="search" id="search-service-input" placeholder="Buscar por Nº Req, Nº NV o Cliente...">
+                    <div class="search-action-buttons">
+                        <button id="search-go-btn" class="icon-btn" style="width: 100%; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.085.12l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.12-.085zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>
+                            Buscar
+                        </button>
+                        <button id="search-next-btn" class="icon-btn" style="width: 100%; justify-content: center; display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"/></svg>
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+                </div>
             <div id="daily-view-container">
                  <div class="calendar-scroll-container">
                     <div id="current-time-indicator" style="display: none;"></div>
@@ -233,7 +385,37 @@
                 </div>
         </div>
     </div>
-    <div class="modal-overlay" id="service-modal"><div class="modal-container"><div class="modal-header"><h2 id="modal-req-num"></h2><button class="modal-close-btn" data-modal-id="service-modal">&times;</button></div><div class="modal-content"><div class="detail-grid"><div class="detail-item"><strong>Cliente:</strong> <span id="modal-cliente"></span></div><div class="detail-item"><strong>Nº NV:</strong> <span id="modal-numNV"></span></div><div class="detail-item full-width"><strong>Dirección:</strong> <span id="modal-direccion"></span></div><div class="detail-item"><strong>Vendedor:</strong> <span id="modal-vendedor"></span></div><div class="detail-item"><strong>Estado Actual:</strong> <span id="modal-estado"></span></div><div class="detail-item"><strong>Técnico Asignado:</strong> <span id="modal-tecnico"></span></div><div class="detail-item"><strong>Fecha Asignada:</strong> <span id="modal-fechaAsignada"></span></div><div class="detail-item"><strong>Hora Traslado:</strong> <span id="modal-horaTraslado"></span></div><div class="detail-item"><strong>Hora Inicio:</strong> <span id="modal-horaInicio"></span></div><div class="detail-item"><strong>Hora Término:</strong> <span id="modal-horaTermino"></span></div><div class="detail-item"><strong>Contacto:</strong> <span id="modal-contacto"></span></div><div class="detail-item"><strong>Teléfono:</strong> <span id="modal-telefono"></span></div><div class="detail-item"><strong>Tiene Repuestos:</strong> <span id="modal-tieneRepuestos"></span></div><div class="detail-item"><strong>Repuestos Despachados:</strong> <span id="modal-repDespachados"></span></div><div class="detail-item"><strong>Fecha Creación:</strong> <span id="modal-fecha-solicitud"></span></div><div class="detail-item"><strong>Última Edición:</strong> <span id="modal-fecha-edicion"></span></div><div class="detail-item full-width"><strong>Info. Servicio:</strong> <span id="modal-info-servicio"></span></div></div></div></div></div>
+    <div class="modal-overlay" id="service-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="modal-req-num"></h2>
+                <button class="modal-close-btn" data-modal-id="service-modal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="detail-grid">
+                    <div class="detail-item"><strong>Cliente:</strong> <span id="modal-cliente"></span></div>
+                    <div class="detail-item"><strong>Nº NV:</strong> <span id="modal-numNV"></span></div>
+                    <div class="detail-item full-width"><strong>Dirección:</strong> <span id="modal-direccion"></span></div>
+                    <div class="detail-item"><strong>Vendedor:</strong> <span id="modal-vendedor"></span></div>
+                    <div class="detail-item"><strong>Estado Actual:</strong> <span id="modal-estado"></span></div>
+                    <div class="detail-item"><strong>Monto Servicio:</strong> <span id="modal-montoServicio"></span></div>
+                    <div class="detail-item"><strong>Tipo Servicio:</strong> <span id="modal-tipoServicio"></span></div>
+                    <div class="detail-item"><strong>Técnico Asignado:</strong> <span id="modal-tecnico"></span></div>
+                    <div class="detail-item"><strong>Fecha Asignada:</strong> <span id="modal-fechaAsignada"></span></div>
+                    <div class="detail-item"><strong>Hora Traslado:</strong> <span id="modal-horaTraslado"></span></div>
+                    <div class="detail-item"><strong>Hora Inicio:</strong> <span id="modal-horaInicio"></span></div>
+                    <div class="detail-item"><strong>Hora Término:</strong> <span id="modal-horaTermino"></span></div>
+                    <div class="detail-item"><strong>Contacto:</strong> <span id="modal-contacto"></span></div>
+                    <div class="detail-item"><strong>Teléfono:</strong> <span id="modal-telefono"></span></div>
+                    <div class="detail-item"><strong>Tiene Repuestos:</strong> <span id="modal-tieneRepuestos"></span></div>
+                    <div class="detail-item"><strong>Repuestos Despachados:</strong> <span id="modal-repDespachados"></span></div>
+                    <div class="detail-item"><strong>Fecha Creación:</strong> <span id="modal-fecha-solicitud"></span></div>
+                    <div class="detail-item"><strong>Última Edición:</strong> <span id="modal-fecha-edicion"></span></div>
+                    <div class="detail-item full-width"><strong>Info. Servicio:</strong> <span id="modal-info-servicio"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -268,10 +450,13 @@
         const state = {
             serviciosCache: [],
             tecnicosCache: [],
-            currentCalendarDate: new Date(),
+            currentCalendarDate: new Date(), // Usaremos este objeto Date para todas las manipulaciones
             currentTimeInterval: null,
             currentView: 'day',
-            activeFilters: [],
+            activeFilters: [], // Filtros de zona
+            searchTerm: '', // Estado para el término de búsqueda actual
+            foundServiceDates: [], // Para almacenar las fechas del servicio encontrado
+            currentFoundServiceIndex: 0, // Índice de la fecha actual mostrada del servicio encontrado
         };
         let unsubscribeServicios;
 
@@ -300,7 +485,34 @@
                 toggleBtn: document.getElementById('toggle-filter-btn'),
                 optionsContainer: document.getElementById('filter-options'),
             },
-            modal: { overlay: document.getElementById('service-modal'), reqNum: document.getElementById('modal-req-num'), cliente: document.getElementById('modal-cliente'), numNV: document.getElementById('modal-numNV'), direccion: document.getElementById('modal-direccion'), vendedor: document.getElementById('modal-vendedor'), estado: document.getElementById('modal-estado'), tecnico: document.getElementById('modal-tecnico'), fechaAsignada: document.getElementById('modal-fechaAsignada'), horaTraslado: document.getElementById('modal-horaTraslado'), horaInicio: document.getElementById('modal-horaInicio'), horaTermino: document.getElementById('modal-horaTermino'), contacto: document.getElementById('modal-contacto'), telefono: document.getElementById('modal-telefono'), tieneRepuestos: document.getElementById('modal-tieneRepuestos'), repDespachados: document.getElementById('modal-repDespachados'), fechaSolicitud: document.getElementById('modal-fecha-solicitud'), fechaEdicion: document.getElementById('modal-fecha-edicion'), infoServicio: document.getElementById('modal-info-servicio')},
+            searchServiceInput: document.getElementById('search-service-input'), // Referencia para el buscador
+            searchGoBtn: document.getElementById('search-go-btn'),         // Botón "Buscar"
+            searchNextBtn: document.getElementById('search-next-btn'),     // Botón "Siguiente"
+            modal: { 
+                overlay: document.getElementById('service-modal'), 
+                reqNum: document.getElementById('modal-req-num'), 
+                cliente: document.getElementById('modal-cliente'), 
+                numNV: document.getElementById('modal-numNV'), 
+                direccion: document.getElementById('modal-direccion'), 
+                vendedor: document.getElementById('modal-vendedor'), 
+                estado: document.getElementById('modal-estado'), 
+                // Nuevas referencias para el modal
+                montoServicio: document.getElementById('modal-montoServicio'),
+                tipoServicio: document.getElementById('modal-tipoServicio'),
+                // Fin nuevas referencias
+                tecnico: document.getElementById('modal-tecnico'), 
+                fechaAsignada: document.getElementById('modal-fechaAsignada'), 
+                horaTraslado: document.getElementById('modal-horaTraslado'), 
+                horaInicio: document.getElementById('modal-horaInicio'), 
+                horaTermino: document.getElementById('modal-horaTermino'), 
+                contacto: document.getElementById('modal-contacto'), 
+                telefono: document.getElementById('modal-telefono'), 
+                tieneRepuestos: document.getElementById('modal-tieneRepuestos'), 
+                repDespachados: document.getElementById('modal-repDespachados'), 
+                fechaSolicitud: document.getElementById('modal-fecha-solicitud'), 
+                fechaEdicion: document.getElementById('modal-fecha-edicion'), 
+                infoServicio: document.getElementById('modal-info-servicio')
+            },
             modalCloseBtns: document.querySelectorAll('.modal-close-btn'),
         };
 
@@ -312,8 +524,9 @@
             ui.headerTitle.textContent = `Calendario: ${user.email.split('@')[0]}`;
             await cargarTecnicos();
             iniciarListenerServicios();
-            setupCalendar();
+            setupCalendar(); // Llama a setupCalendar para inicializar el date-picker
             setupFilters();
+            addSearchListeners(); // Añadir listeners del buscador
         }
         function tearDownApp() {
             ui.loginContainer.style.display = 'flex';
@@ -330,12 +543,18 @@
         function iniciarListenerServicios() {
             unsubscribeServicios = db.collection('servicios').onSnapshot(snapshot => {
                 state.serviciosCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                render();
+                // Si hay un término de búsqueda activo, re-ejecutar la búsqueda para actualizar fechas
+                if (state.searchTerm) {
+                    performSearch(state.searchTerm, false); // No forzar ir a la primera fecha, solo actualizar lista
+                } else {
+                    render();
+                }
             }, error => console.error("Error al escuchar servicios:", error));
         }
 
         function setupCalendar() {
-            ui.datePicker.value = state.currentCalendarDate.toISOString().split('T')[0];
+            // Inicializa el date-picker con la fecha actual del estado al cargar la app
+            updateDatePicker(); 
             ui.timeSlotsWrapper.innerHTML = ''; 
             for (let hour = CALENDAR_START_HOUR; hour < CALENDAR_END_HOUR; hour++) {
                 const timeSlot = document.createElement('div');
@@ -380,12 +599,112 @@
             });
         }
 
+        function addSearchListeners() {
+            ui.searchGoBtn.addEventListener('click', () => {
+                const term = ui.searchServiceInput.value.toLowerCase().trim();
+                if (term) {
+                    performSearch(term, true); // Forzar ir a la primera fecha
+                } else {
+                    state.searchTerm = '';
+                    state.foundServiceDates = [];
+                    ui.searchNextBtn.style.display = 'none';
+                    render(); // Renderiza sin filtro de búsqueda
+                }
+            });
+
+            ui.searchNextBtn.addEventListener('click', () => {
+                if (state.foundServiceDates.length > 0) {
+                    state.currentFoundServiceIndex = (state.currentFoundServiceIndex + 1) % state.foundServiceDates.length;
+                    navigateToDate(state.foundServiceDates[state.currentFoundServiceIndex]);
+                }
+            });
+
+            // Opcional: Permitir búsqueda al presionar Enter en el input
+            ui.searchServiceInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    ui.searchGoBtn.click();
+                }
+            });
+            // Limpiar la búsqueda y ocultar "Siguiente" si el input se vacía
+            ui.searchServiceInput.addEventListener('input', () => {
+                if (ui.searchServiceInput.value.trim() === '') {
+                    state.searchTerm = '';
+                    state.foundServiceDates = [];
+                    ui.searchNextBtn.style.display = 'none';
+                    render(); // Renderiza sin filtro de búsqueda
+                }
+            });
+        }
+        
+        function performSearch(term, navigateToFirst = true) {
+            state.searchTerm = term;
+            state.foundServiceDates = []; // Reiniciar fechas encontradas
+
+            const matchingServices = state.serviciosCache.filter(s => {
+                return (s.numRequerimiento && s.numRequerimiento.toLowerCase().includes(term)) ||
+                       (s.numNV && s.numNV.toLowerCase().includes(term)) ||
+                       (s.cliente && s.cliente.toLowerCase().includes(term));
+            });
+
+            // Obtener todas las fechas asignadas para los servicios encontrados, ordenarlas y eliminar duplicados
+            const uniqueDates = [...new Set(matchingServices.map(s => s.fechaAsignada))]
+                                .filter(date => date) // Eliminar fechas nulas/vacías
+                                .sort(); // Ordenar cronológicamente
+
+            state.foundServiceDates = uniqueDates;
+
+            if (state.foundServiceDates.length > 0) {
+                if (navigateToFirst) {
+                    state.currentFoundServiceIndex = 0;
+                    navigateToDate(state.foundServiceDates[0]);
+                }
+                ui.searchNextBtn.style.display = state.foundServiceDates.length > 1 ? 'inline-flex' : 'none';
+            } else {
+                alert(`No se encontraron servicios para "${term}".`);
+                ui.searchNextBtn.style.display = 'none';
+                render(); // Renderiza el calendario actual sin resultados de búsqueda
+            }
+        }
+
+        // Función auxiliar para obtener la fecha en formato YYYY-MM-DD
+        function getYYYYMMDD(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Función para actualizar el date-picker
+        function updateDatePicker() {
+            ui.datePicker.value = getYYYYMMDD(state.currentCalendarDate);
+        }
+
+        function navigateToDate(dateString) {
+            if (!dateString) return;
+            // Asegurarse de parsear la fecha en la zona horaria local o como UTC para evitar errores de fecha
+            // Si la fecha en Firestore es "YYYY-MM-DD", `new Date(dateString)` la interpretará como UTC si no hay hora.
+            // Para asegurar que sea local, podemos crearla así:
+            const parts = dateString.split('-').map(Number);
+            state.currentCalendarDate = new Date(parts[0], parts[1] - 1, parts[2]); // Se crea en zona horaria local
+            updateDatePicker(); // Sincroniza el input date
+            render(); 
+        }
+
+
         function getFilteredTechnicians() {
             if (state.activeFilters.length === 0) {
                 return state.tecnicosCache;
             }
             const techniciansInZone = state.activeFilters.flatMap(zona => ZONAS[zona]);
             return state.tecnicosCache.filter(tech => techniciansInZone.includes(tech.nombre));
+        }
+
+        // Función para formatear monto en pesos chilenos para visualización
+        function displayCurrency(value) {
+            if (value === undefined || value === null || value === '' || isNaN(value)) return 'N/A';
+            const numericValue = parseInt(String(value).replace(/\$|\./g, ''), 10); // Limpia y convierte a número
+            if (isNaN(numericValue)) return 'N/A';
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numericValue);
         }
 
         function render() {
@@ -395,6 +714,22 @@
                 renderWeeklyCalendar();
             }
         }
+
+        // Esta función ahora solo aplica el filtro de búsqueda a una lista dada.
+        // No está en las funciones de renderizado directamente, sino que se llama
+        // desde performSearch y luego las render functions usan state.searchTerm
+        function filterServicesBySearchTerm(services) {
+            if (!state.searchTerm) {
+                return services;
+            }
+            const term = state.searchTerm;
+            return services.filter(s => {
+                return (s.numRequerimiento && s.numRequerimiento.toLowerCase().includes(term)) ||
+                       (s.numNV && s.numNV.toLowerCase().includes(term)) ||
+                       (s.cliente && s.cliente.toLowerCase().includes(term));
+            });
+        }
+
 
         function renderDailyCalendar() {
             ui.dailyViewContainer.style.display = 'block';
@@ -413,7 +748,13 @@
             ui.technicianColsContainer.innerHTML = '';
             ui.technicianHeadersContainer.innerHTML = '';
             
-            const servicesForDay = state.serviciosCache.filter(s => s.fechaAsignada === state.currentCalendarDate.toISOString().split('T')[0] && s.tecnicos);
+            // Obtener todos los servicios del día actual
+            let servicesForDay = state.serviciosCache.filter(s => s.fechaAsignada === getYYYYMMDD(state.currentCalendarDate) && s.tecnicos);
+            
+            // Si hay un término de búsqueda, filtrar los servicios del día
+            if (state.searchTerm) {
+                servicesForDay = filterServicesBySearchTerm(servicesForDay);
+            }
 
             filteredTechnicians.forEach(tecnico => {
                 const headerDiv = document.createElement('div');
@@ -440,7 +781,7 @@
                 const layout = calculateOverlaps(techServices);
 
                 layout.forEach(service => {
-                    const { travelBlock, serviceBlock } = createEventBlocks(service);
+                    const { serviceBlock, travelBlock } = createEventBlocks(service);
                     if (travelBlock) columnDiv.appendChild(travelBlock);
                     if (serviceBlock) columnDiv.appendChild(serviceBlock);
                 });
@@ -482,8 +823,15 @@
                 gridContainer.appendChild(headerCell);
             }
 
-            const weekDateStrings = weekDates.map(d => d.toISOString().split('T')[0]);
-            const servicesForWeek = state.serviciosCache.filter(s => weekDateStrings.includes(s.fechaAsignada) && s.tecnicos);
+            const weekDateStrings = weekDates.map(d => getYYYYMMDD(d)); // Usar getYYYYMMDD
+            
+            // Obtener todos los servicios de la semana
+            let servicesForWeek = state.serviciosCache.filter(s => weekDateStrings.includes(s.fechaAsignada) && s.tecnicos);
+            
+            // Si hay un término de búsqueda, filtrar los servicios de la semana
+            if (state.searchTerm) {
+                servicesForWeek = filterServicesBySearchTerm(servicesForWeek);
+            }
 
             filteredTechnicians.forEach(tecnico => {
                 const techCell = document.createElement('div');
@@ -495,23 +843,25 @@
                     const dayCell = document.createElement('div');
                     dayCell.className = 'week-grid-day-cell';
                     
-                    const dayString = day.toISOString().split('T')[0];
+                    const dayString = getYYYYMMDD(day); // Usar getYYYYMMDD
                     const servicesForCell = servicesForWeek
                         .filter(s => s.fechaAsignada === dayString && (Array.isArray(s.tecnicos) ? s.tecnicos.includes(tecnico.nombre) : s.tecnicos === tecnico.nombre))
                         .sort((a,b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
 
                     servicesForCell.forEach(service => {
                         const statusClass = `status-${(service.estado || 'Otros').replace(/\s+/g, '-')}`;
+                        // Sanitizar tipoServicio para la clase CSS
+                        const typeClass = service.tipoServicio ? `type-${service.tipoServicio.replace(/\s+/g, '-')}` : ''; 
+
                         const eventItem = document.createElement('div');
-                        eventItem.className = `week-event-item ${statusClass}`;
+                        eventItem.className = `week-event-item ${statusClass} ${typeClass}`; 
                         eventItem.dataset.serviceId = service.id;
                         
                         const time = (service.horaInicio && service.horaTermino) ? `${service.horaInicio} - ${service.horaTermino}` : (service.horaInicio || '');
                         
                         eventItem.innerHTML = `
                             <strong>${service.cliente || 'N/A'}</strong>
-                            <span>${time}</span>
-                            <span>${service.tipoServicio || 'Asistencia'}</span>
+                            <span>${time} - ${displayCurrency(service.montoServicio)}</span> <span>${service.tipoServicio || 'Asistencia'}</span>
                         `;
                         dayCell.appendChild(eventItem);
                     });
@@ -550,14 +900,22 @@
         function createEventBlocks(service) {
             if (service.start === undefined) return {};
             const statusClass = `status-${(service.estado || 'Otros').replace(/\s+/g, '-')}`;
+            // Sanitizar tipoServicio para la clase CSS
+            const typeClass = service.tipoServicio ? `type-${service.tipoServicio.replace(/\s+/g, '-')}` : ''; 
+            
             const serviceTop = ((service.start / 60) - CALENDAR_START_HOUR) * PIXELS_PER_HOUR;
             const serviceHeight = Math.max(((service.end - service.start) / 60) * PIXELS_PER_HOUR, 15);
+            
             const serviceBlock = document.createElement('div');
-            serviceBlock.className = `event-block ${statusClass}`;
+            serviceBlock.className = `event-block ${statusClass} ${typeClass}`; // Añadido typeClass aquí
             Object.assign(serviceBlock.style, { top: `${serviceTop}px`, height: `${serviceHeight}px`, ...service.style });
-            serviceBlock.innerHTML = `<strong>${service.cliente || 'N/A'}</strong><span>${service.horaInicio} - ${service.horaTermino || ''}</span>`;
+            serviceBlock.innerHTML = `
+                <strong>${service.cliente || 'N/A'}</strong>
+                <span>${service.horaInicio} - ${service.horaTermino || ''}</span>
+                <span>${service.tipoServicio || 'N/A'} - ${displayCurrency(service.montoServicio)}</span> `;
             serviceBlock.dataset.serviceId = service.id;
-            serviceBlock.title = `Cliente: ${service.cliente}\nReq: ${service.numRequerimiento || 'N/A'}\nEstado: ${service.estado}`;
+            serviceBlock.title = `Cliente: ${service.cliente}\nReq: ${service.numRequerimiento || 'N/A'}\nEstado: ${service.estado}\nMonto: ${displayCurrency(service.montoServicio)}\nTipo: ${service.tipoServicio || 'N/A'}`;
+            
             let travelBlock = null;
             if (service.horaTraslado && service.horaInicio) {
                 const travelStartMinutes = timeToMinutes(service.horaTraslado);
@@ -567,7 +925,7 @@
                     const travelHeight = (travelDurationMinutes / 60) * PIXELS_PER_HOUR;
                     const travelTop = serviceTop - travelHeight;
                     travelBlock = document.createElement('div');
-                    travelBlock.className = `travel-block ${statusClass}`;
+                    travelBlock.className = `travel-block ${statusClass} ${typeClass}`; // Añadido typeClass aquí también
                     Object.assign(travelBlock.style, { top: `${travelTop}px`, height: `${travelHeight}px`, ...service.style });
                     travelBlock.innerHTML = `Traslado`;
                     travelBlock.dataset.serviceId = service.id;
@@ -584,11 +942,16 @@
                 return;
             }
             const today = new Date();
-            if (state.currentCalendarDate.toDateString() !== today.toDateString()) {
+            // Asegúrate de que today sea una fecha "local" para la comparación
+            const todayYYYYMMDD = getYYYYMMDD(today);
+            const currentCalendarYYYYMMDD = getYYYYMMDD(state.currentCalendarDate);
+
+            if (currentCalendarYYYYMMDD !== todayYYYYMMDD) {
                 ui.currentTimeIndicator.style.display = 'none';
                 return;
             }
             const setPosition = () => {
+                // Usa la hora local actual
                 const now = new Date();
                 const minutes = now.getHours() * 60 + now.getMinutes();
                 const headerHeight = document.querySelector('.technician-header')?.offsetHeight || 53;
@@ -602,15 +965,17 @@
                 }
             };
             setPosition();
-            state.currentTimeInterval = setInterval(setPosition, 60000);
+            state.currentTimeInterval = setInterval(setPosition, 60000); // Actualizar cada minuto
         }
         
         function getWeekStartDate(date) {
             const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
-            const weekStart = new Date(d.setDate(diff));
-            weekStart.setHours(0,0,0,0);
+            // El día de la semana de JS es 0 (domingo) a 6 (sábado)
+            // Queremos que la semana comience el lunes (1).
+            const dayOfWeek = d.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+            const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Si es domingo (0), resta 6 para ir al lunes anterior, si no, resta dayOfWeek - 1
+            const weekStart = new Date(d.getFullYear(), d.getMonth(), diff);
+            weekStart.setHours(0,0,0,0); // Asegurar que sea el inicio del día
             return weekStart;
         }
         
@@ -627,21 +992,13 @@
             } else {
                 state.currentCalendarDate.setDate(state.currentCalendarDate.getDate() - 7);
             }
-            ui.datePicker.value = state.currentCalendarDate.toISOString().split('T')[0];
+            updateDatePicker(); // Sincroniza el input date
             render();
         });
 
         ui.todayBtn.addEventListener('click', () => {
-            const today = new Date();
-            state.currentCalendarDate = today;
-
-            // Manually format the date to YYYY-MM-DD for the local timezone
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-            const day = String(today.getDate()).padStart(2, '0');
-            const localDateString = `${year}-${month}-${day}`;
-
-            ui.datePicker.value = localDateString;
+            state.currentCalendarDate = new Date(); // Establece la fecha actual (local)
+            updateDatePicker(); // Sincroniza el input date
             render();
         });
 
@@ -651,12 +1008,13 @@
             } else {
                 state.currentCalendarDate.setDate(state.currentCalendarDate.getDate() + 7);
             }
-            ui.datePicker.value = state.currentCalendarDate.toISOString().split('T')[0];
+            updateDatePicker(); // Sincroniza el input date
             render();
         });
         
         ui.datePicker.addEventListener('change', () => { 
             const dateParts = ui.datePicker.value.split('-').map(Number);
+            // Creamos la fecha usando el constructor que interpreta como hora local
             state.currentCalendarDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
             render(); 
         });
@@ -676,13 +1034,21 @@
 
         function openModal(modalId, service) {
             const m = ui.modal;
-            const formatTimestamp = (ts) => ts ? ts.toDate().toLocaleString('es-CL') : 'N/A';
+            // Para mostrar la fecha y hora de Chile Continental:
+            // new Date().toLocaleString() utiliza la zona horaria del navegador.
+            // Para asegurar "Chile Continental", puedes especificar la opción 'timeZone'.
+            // Sin embargo, si el usuario ya está en Chile, 'es-CL' debería ser suficiente.
+            const formatTimestamp = (ts) => ts ? ts.toDate().toLocaleString('es-CL', {timeZone: 'America/Santiago'}) : 'N/A';
+            
             m.reqNum.textContent = `Detalles: Req #${service.numRequerimiento || 'N/A'}`;
             m.cliente.textContent = service.cliente || 'N/A';
             m.numNV.textContent = service.numNV || 'N/A';
             m.direccion.textContent = service.direccion || 'N/A';
             m.vendedor.textContent = service.vendedor ? service.vendedor.split('@')[0] : 'N/A';
             m.estado.textContent = service.estado || 'N/A';
+            // Monto y Tipo de Servicio en el modal
+            m.montoServicio.textContent = displayCurrency(service.montoServicio);
+            m.tipoServicio.textContent = service.tipoServicio || 'N/A';
             const tecnicos = Array.isArray(service.tecnicos) ? service.tecnicos.join(', ') : (service.tecnico || 'Sin Asignar');
             m.tecnico.textContent = tecnicos;
             m.fechaAsignada.textContent = service.fechaAsignada || 'N/A';
@@ -692,7 +1058,7 @@
             m.contacto.textContent = service.nomContacto || 'N/A';
             m.telefono.textContent = service.numContacto || 'N/A';
             m.tieneRepuestos.textContent = service.tieneRepuestos || 'N/A';
-            m.repDespachados.textContent = service.repuestosDespachados || 'N/A';
+            m.repDespachados.textContent = service.repDespachados || 'N/A';
             m.fechaSolicitud.textContent = formatTimestamp(service.timestamp);
             m.fechaEdicion.textContent = service.fechaEdicion ? formatTimestamp(service.fechaEdicion) : 'Sin ediciones';
             m.infoServicio.textContent = service.infoServicio || 'N/A';
