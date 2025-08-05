@@ -183,8 +183,8 @@
         }
         .week-grid-header, .week-grid-tech-cell, .week-grid-day-cell {
             padding: 0.6rem;
-            border-right: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            border-right: 1.5px solid var(--border-color);
+            border-bottom: 1.5px solid var(--border-color);
         }
         .week-grid-header {
             text-align: center; font-weight: 600; color: var(--text-primary);
@@ -264,6 +264,13 @@
         
         /* --- FIN DE LAS REGLAS DE COLOR POR TIPO DE SERVICIO PARA LA VISTA SEMANAL --- */
 
+        /* AÑADIR ESTAS REGLAS PARA LA PANTALLA COMPLETA */
+        :fullscreen #daily-view-container .calendar-scroll-container,
+        :-webkit-full-screen #daily-view-container .calendar-scroll-container,
+        :fullscreen .week-grid-container,
+        :-webkit-full-screen .week-grid-container {
+            max-height: 100vh;
+        }
 
         /* --- Modal Corrections --- */
         .modal-overlay { 
@@ -420,9 +427,9 @@
 
     <script>
         const firebaseConfig = {
-          apiKey: "AIzaSyA9tUGGmMqk85Hljw8H1XoTfX2U5iQu85c",
-          authDomain: "control-de-servicios-b8e34.firebaseapp.com",
-          projectId: "control-de-servicios-b8e34",
+            apiKey: "AIzaSyA9tUGGmMqk85Hljw8H1XoTfX2U5iQu85c",
+            authDomain: "control-de-servicios-b8e34.firebaseapp.com",
+            projectId: "control-de-servicios-b8e34",
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -447,7 +454,7 @@
         const CALENDAR_START_HOUR = 7;
         const CALENDAR_END_HOUR = 20;
         const PIXELS_PER_HOUR = 50; 
-
+        
         const state = {
             serviciosCache: [],
             tecnicosCache: [],
@@ -464,7 +471,7 @@
             autoplayDirection: 1, // 1 for forward (right/down), -1 for backward (left/up)
         };
         let unsubscribeServicios;
-
+        
         const ui = {
             loginContainer: document.getElementById('login-container'),
             mainContent: document.getElementById('main-content'),
@@ -653,7 +660,6 @@
             const uniqueDates = [...new Set(matchingServices.map(s => s.fechaAsignada))]
                                 .filter(date => date)
                                 .sort(); 
-
             state.foundServiceDates = uniqueDates;
 
             if (state.foundServiceDates.length > 0) {
@@ -860,14 +866,37 @@
             gridContainer.addEventListener('click', handleEventClick);
         }
         
-        // --- NEW AUTOPLAY FUNCTIONS ---
+        // --- NUEVAS FUNCIONES PARA PANTALLA COMPLETA Y AUTOPLAY MODIFICADAS ---
+        function toggleFullscreen(element) {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) { /* Safari */
+                    element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) { /* IE11 */
+                    element.msRequestFullscreen();
+                }
+            }
+        }
+
         function toggleAutoplay() {
             state.isAutoplaying = !state.isAutoplaying;
             ui.autoplayBtn.classList.toggle('active', state.isAutoplaying);
             if (state.isAutoplaying) {
                 startAutoplay();
+                // Entrar a pantalla completa según la vista actual
+                const calendarContainer = state.currentView === 'day' ? ui.dailyViewContainer : ui.weeklyViewContainer;
+                if (calendarContainer) {
+                    toggleFullscreen(calendarContainer);
+                }
             } else {
                 stopAutoplay();
+                // Salir de pantalla completa si estamos en ella
+                if (document.fullscreenElement) {
+                    toggleFullscreen(document.documentElement);
+                }
             }
         }
 
@@ -911,7 +940,14 @@
                 state.autoplayInterval = null;
             }
         }
-        // --- END OF NEW AUTOPLAY FUNCTIONS ---
+        
+        // Escuchador para detener el autoplay si el usuario sale de pantalla completa manualmente
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && state.isAutoplaying) {
+                toggleAutoplay();
+            }
+        });
+        // --- FIN DE LAS FUNCIONES DE PANTALLA COMPLETA Y AUTOPLAY MODIFICADAS ---
 
         function calculateOverlaps(services) {
             const layout = [];
