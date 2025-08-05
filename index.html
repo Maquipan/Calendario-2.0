@@ -12,6 +12,54 @@
             --font-main: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             --transition-speed: 0.3s;
         }
+/* Asegura que el contenido del body ocupe todo el espacio en pantalla completa */
+body:-webkit-full-screen,
+body:-moz-full-screen,
+body:-ms-fullscreen,
+body:fullscreen {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+/* Estilos para el modo de pantalla completa */
+.fullscreen-mode .header-controls,
+.fullscreen-mode .calendar-controls,
+.fullscreen-mode #filter-controls,
+.fullscreen-mode .search-action-buttons,
+.fullscreen-mode .search-service-input,
+.fullscreen-mode #current-date-display,
+.fullscreen-mode .card {
+    display: none !important;
+}
+
+.fullscreen-mode .container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+}
+
+.fullscreen-mode #daily-view-container .calendar-scroll-container,
+.fullscreen-mode #weekly-view-container .week-grid-container {
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+}
+
+.container {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    height: 100vh;
+}
+.header-controls {
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
+/* Y para que el calendario en sí se expanda, aseguramos que sus contenedores tengan altura 100% */
+#daily-view-container .calendar-scroll-container,
+#weekly-view-container .week-grid-container {
+    max-height: calc(100vh - 60px); /* Ajusta este valor para dejar espacio al encabezado */
+}
         [data-theme="dark"] {
             --bg-primary: #1a1b26; --bg-secondary: #24283b; --bg-tertiary: #414868;
             --text-primary: #c0caf5; --text-secondary: #a9b1d6; --accent: #7dcfff;
@@ -183,8 +231,8 @@
         }
         .week-grid-header, .week-grid-tech-cell, .week-grid-day-cell {
             padding: 0.6rem;
-            border-right: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            border-right: 1.5px solid var(--border-color);
+            border-bottom: 1.5px solid var(--border-color);
         }
         .week-grid-header {
             text-align: center; font-weight: 600; color: var(--text-primary);
@@ -337,6 +385,7 @@
                 <div>
                      <button id="view-day-btn" class="icon-btn active">Día</button>
                      <button id="view-week-btn" class="icon-btn">Semana</button>
+                     <button id="autoplay-btn" class="icon-btn" style="margin-left: 1rem;">Autoplay</button>
                      <button id="logout-button" class="icon-btn" style="margin-left: 1rem;">Cerrar Sesión</button>
                 </div>
              </div>
@@ -419,9 +468,9 @@
 
     <script>
         const firebaseConfig = {
-          apiKey: "AIzaSyA9tUGGmMqk85Hljw8H1XoTfX2U5iQu85c",
-          authDomain: "control-de-servicios-b8e34.firebaseapp.com",
-          projectId: "control-de-servicios-b8e34",
+            apiKey: "AIzaSyA9tUGGmMqk85Hljw8H1XoTfX2U5iQu85c",
+            authDomain: "control-de-servicios-b8e34.firebaseapp.com",
+            projectId: "control-de-servicios-b8e34",
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -450,13 +499,17 @@
         const state = {
             serviciosCache: [],
             tecnicosCache: [],
-            currentCalendarDate: new Date(), // Usaremos este objeto Date para todas las manipulaciones
+            currentCalendarDate: new Date(),
             currentTimeInterval: null,
             currentView: 'day',
-            activeFilters: [], // Filtros de zona
-            searchTerm: '', // Estado para el término de búsqueda actual
-            foundServiceDates: [], // Para almacenar las fechas del servicio encontrado
-            currentFoundServiceIndex: 0, // Índice de la fecha actual mostrada del servicio encontrado
+            activeFilters: [],
+            searchTerm: '',
+            foundServiceDates: [],
+            currentFoundServiceIndex: 0,
+            // NEW AUTOPLAY STATE
+            isAutoplaying: false,
+            autoplayInterval: null,
+            autoplayDirection: 1, // 1 for forward (right/down), -1 for backward (left/up)
         };
         let unsubscribeServicios;
 
@@ -485,9 +538,11 @@
                 toggleBtn: document.getElementById('toggle-filter-btn'),
                 optionsContainer: document.getElementById('filter-options'),
             },
-            searchServiceInput: document.getElementById('search-service-input'), // Referencia para el buscador
-            searchGoBtn: document.getElementById('search-go-btn'),         // Botón "Buscar"
-            searchNextBtn: document.getElementById('search-next-btn'),     // Botón "Siguiente"
+            searchServiceInput: document.getElementById('search-service-input'),
+            searchGoBtn: document.getElementById('search-go-btn'),
+            searchNextBtn: document.getElementById('search-next-btn'),
+            // NEW AUTOPLAY BUTTON REFERENCE
+            autoplayBtn: document.getElementById('autoplay-btn'),
             modal: { 
                 overlay: document.getElementById('service-modal'), 
                 reqNum: document.getElementById('modal-req-num'), 
@@ -496,10 +551,8 @@
                 direccion: document.getElementById('modal-direccion'), 
                 vendedor: document.getElementById('modal-vendedor'), 
                 estado: document.getElementById('modal-estado'), 
-                // Nuevas referencias para el modal
                 montoServicio: document.getElementById('modal-montoServicio'),
                 tipoServicio: document.getElementById('modal-tipoServicio'),
-                // Fin nuevas referencias
                 tecnico: document.getElementById('modal-tecnico'), 
                 fechaAsignada: document.getElementById('modal-fechaAsignada'), 
                 horaTraslado: document.getElementById('modal-horaTraslado'), 
@@ -524,15 +577,18 @@
             ui.headerTitle.textContent = `Calendario: ${user.email.split('@')[0]}`;
             await cargarTecnicos();
             iniciarListenerServicios();
-            setupCalendar(); // Llama a setupCalendar para inicializar el date-picker
+            setupCalendar(); 
             setupFilters();
-            addSearchListeners(); // Añadir listeners del buscador
+            addSearchListeners();
+            // Add listener for the new autoplay button
+            ui.autoplayBtn.addEventListener('click', toggleAutoplay);
         }
         function tearDownApp() {
             ui.loginContainer.style.display = 'flex';
             ui.mainContent.style.display = 'none';
             if (unsubscribeServicios) unsubscribeServicios();
             if (state.currentTimeInterval) clearInterval(state.currentTimeInterval);
+            stopAutoplay(); // Ensure autoplay stops on logout
         }
         async function cargarTecnicos() {
             try {
@@ -543,9 +599,8 @@
         function iniciarListenerServicios() {
             unsubscribeServicios = db.collection('servicios').onSnapshot(snapshot => {
                 state.serviciosCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Si hay un término de búsqueda activo, re-ejecutar la búsqueda para actualizar fechas
                 if (state.searchTerm) {
-                    performSearch(state.searchTerm, false); // No forzar ir a la primera fecha, solo actualizar lista
+                    performSearch(state.searchTerm, false); 
                 } else {
                     render();
                 }
@@ -553,7 +608,6 @@
         }
 
         function setupCalendar() {
-            // Inicializa el date-picker con la fecha actual del estado al cargar la app
             updateDatePicker(); 
             ui.timeSlotsWrapper.innerHTML = ''; 
             for (let hour = CALENDAR_START_HOUR; hour < CALENDAR_END_HOUR; hour++) {
@@ -603,12 +657,12 @@
             ui.searchGoBtn.addEventListener('click', () => {
                 const term = ui.searchServiceInput.value.toLowerCase().trim();
                 if (term) {
-                    performSearch(term, true); // Forzar ir a la primera fecha
+                    performSearch(term, true);
                 } else {
                     state.searchTerm = '';
                     state.foundServiceDates = [];
                     ui.searchNextBtn.style.display = 'none';
-                    render(); // Renderiza sin filtro de búsqueda
+                    render();
                 }
             });
 
@@ -619,26 +673,24 @@
                 }
             });
 
-            // Opcional: Permitir búsqueda al presionar Enter en el input
             ui.searchServiceInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     ui.searchGoBtn.click();
                 }
             });
-            // Limpiar la búsqueda y ocultar "Siguiente" si el input se vacía
             ui.searchServiceInput.addEventListener('input', () => {
                 if (ui.searchServiceInput.value.trim() === '') {
                     state.searchTerm = '';
                     state.foundServiceDates = [];
                     ui.searchNextBtn.style.display = 'none';
-                    render(); // Renderiza sin filtro de búsqueda
+                    render();
                 }
             });
         }
         
         function performSearch(term, navigateToFirst = true) {
             state.searchTerm = term;
-            state.foundServiceDates = []; // Reiniciar fechas encontradas
+            state.foundServiceDates = [];
 
             const matchingServices = state.serviciosCache.filter(s => {
                 return (s.numRequerimiento && s.numRequerimiento.toLowerCase().includes(term)) ||
@@ -646,11 +698,9 @@
                        (s.cliente && s.cliente.toLowerCase().includes(term));
             });
 
-            // Obtener todas las fechas asignadas para los servicios encontrados, ordenarlas y eliminar duplicados
             const uniqueDates = [...new Set(matchingServices.map(s => s.fechaAsignada))]
-                                .filter(date => date) // Eliminar fechas nulas/vacías
-                                .sort(); // Ordenar cronológicamente
-
+                                .filter(date => date)
+                                .sort(); 
             state.foundServiceDates = uniqueDates;
 
             if (state.foundServiceDates.length > 0) {
@@ -662,34 +712,28 @@
             } else {
                 alert(`No se encontraron servicios para "${term}".`);
                 ui.searchNextBtn.style.display = 'none';
-                render(); // Renderiza el calendario actual sin resultados de búsqueda
+                render();
             }
         }
-
-        // Función auxiliar para obtener la fecha en formato YYYY-MM-DD
+        
         function getYYYYMMDD(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
-
-        // Función para actualizar el date-picker
+        
         function updateDatePicker() {
             ui.datePicker.value = getYYYYMMDD(state.currentCalendarDate);
         }
 
         function navigateToDate(dateString) {
             if (!dateString) return;
-            // Asegurarse de parsear la fecha en la zona horaria local o como UTC para evitar errores de fecha
-            // Si la fecha en Firestore es "YYYY-MM-DD", `new Date(dateString)` la interpretará como UTC si no hay hora.
-            // Para asegurar que sea local, podemos crearla así:
             const parts = dateString.split('-').map(Number);
-            state.currentCalendarDate = new Date(parts[0], parts[1] - 1, parts[2]); // Se crea en zona horaria local
-            updateDatePicker(); // Sincroniza el input date
+            state.currentCalendarDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            updateDatePicker();
             render(); 
         }
-
 
         function getFilteredTechnicians() {
             if (state.activeFilters.length === 0) {
@@ -699,10 +743,9 @@
             return state.tecnicosCache.filter(tech => techniciansInZone.includes(tech.nombre));
         }
 
-        // Función para formatear monto en pesos chilenos para visualización
         function displayCurrency(value) {
             if (value === undefined || value === null || value === '' || isNaN(value)) return 'N/A';
-            const numericValue = parseInt(String(value).replace(/\$|\./g, ''), 10); // Limpia y convierte a número
+            const numericValue = parseInt(String(value).replace(/\$|\./g, ''), 10);
             if (isNaN(numericValue)) return 'N/A';
             return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(numericValue);
         }
@@ -714,10 +757,7 @@
                 renderWeeklyCalendar();
             }
         }
-
-        // Esta función ahora solo aplica el filtro de búsqueda a una lista dada.
-        // No está en las funciones de renderizado directamente, sino que se llama
-        // desde performSearch y luego las render functions usan state.searchTerm
+        
         function filterServicesBySearchTerm(services) {
             if (!state.searchTerm) {
                 return services;
@@ -748,10 +788,8 @@
             ui.technicianColsContainer.innerHTML = '';
             ui.technicianHeadersContainer.innerHTML = '';
             
-            // Obtener todos los servicios del día actual
             let servicesForDay = state.serviciosCache.filter(s => s.fechaAsignada === getYYYYMMDD(state.currentCalendarDate) && s.tecnicos);
             
-            // Si hay un término de búsqueda, filtrar los servicios del día
             if (state.searchTerm) {
                 servicesForDay = filterServicesBySearchTerm(servicesForDay);
             }
@@ -823,12 +861,10 @@
                 gridContainer.appendChild(headerCell);
             }
 
-            const weekDateStrings = weekDates.map(d => getYYYYMMDD(d)); // Usar getYYYYMMDD
+            const weekDateStrings = weekDates.map(d => getYYYYMMDD(d));
             
-            // Obtener todos los servicios de la semana
             let servicesForWeek = state.serviciosCache.filter(s => weekDateStrings.includes(s.fechaAsignada) && s.tecnicos);
             
-            // Si hay un término de búsqueda, filtrar los servicios de la semana
             if (state.searchTerm) {
                 servicesForWeek = filterServicesBySearchTerm(servicesForWeek);
             }
@@ -843,14 +879,13 @@
                     const dayCell = document.createElement('div');
                     dayCell.className = 'week-grid-day-cell';
                     
-                    const dayString = getYYYYMMDD(day); // Usar getYYYYMMDD
+                    const dayString = getYYYYMMDD(day);
                     const servicesForCell = servicesForWeek
                         .filter(s => s.fechaAsignada === dayString && (Array.isArray(s.tecnicos) ? s.tecnicos.includes(tecnico.nombre) : s.tecnicos === tecnico.nombre))
                         .sort((a,b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
 
                     servicesForCell.forEach(service => {
                         const statusClass = `status-${(service.estado || 'Otros').replace(/\s+/g, '-')}`;
-                        // Sanitizar tipoServicio para la clase CSS
                         const typeClass = service.tipoServicio ? `type-${service.tipoServicio.replace(/\s+/g, '-')}` : ''; 
 
                         const eventItem = document.createElement('div');
@@ -871,6 +906,94 @@
             });
             gridContainer.addEventListener('click', handleEventClick);
         }
+        
+        // --- NUEVAS FUNCIONES PARA PANTALLA COMPLETA Y AUTOPLAY MODIFICADAS ---
+function toggleFullscreen(element) {
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        if (element && element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element && element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element && element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+    }
+}
+
+function toggleAutoplay() {
+    state.isAutoplaying = !state.isAutoplaying;
+    ui.autoplayBtn.classList.toggle('active', state.isAutoplaying);
+    document.body.classList.toggle('fullscreen-mode', state.isAutoplaying);
+
+    const calendarContainer = state.currentView === 'day' ? 
+        document.querySelector('#daily-view-container .calendar-scroll-container') : 
+        document.querySelector('#weekly-view-container .week-grid-container');
+
+    if (state.isAutoplaying) {
+        startAutoplay();
+        if (calendarContainer) {
+            toggleFullscreen(calendarContainer);
+        }
+    } else {
+        stopAutoplay();
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+        function startAutoplay() {
+            stopAutoplay(); // Ensure no multiple intervals are running
+
+            const scrollStep = 1; // Pixels to scroll each step. Smaller is smoother.
+            const intervalTime = 35; // Milliseconds between steps. Lower is faster.
+
+            state.autoplayInterval = setInterval(() => {
+                if (state.currentView === 'day') {
+                    const container = document.querySelector('#daily-view-container .calendar-scroll-container');
+                    if (!container) return;
+
+                    let maxScroll = container.scrollWidth - container.clientWidth;
+                    if (container.scrollLeft >= maxScroll - scrollStep) {
+                        state.autoplayDirection = -1; // Reverse to go left
+                    } else if (container.scrollLeft <= 0) {
+                        state.autoplayDirection = 1; // Go right
+                    }
+                    container.scrollLeft += scrollStep * state.autoplayDirection;
+
+                } else if (state.currentView === 'week') {
+                    const container = document.querySelector('#weekly-view-container .week-grid-container');
+                    if (!container) return;
+
+                    let maxScroll = container.scrollHeight - container.clientHeight;
+                    if (container.scrollTop >= maxScroll - scrollStep) {
+                        state.autoplayDirection = -1; // Reverse to go up
+                    } else if (container.scrollTop <= 0) {
+                        state.autoplayDirection = 1; // Go down
+                    }
+                    container.scrollTop += scrollStep * state.autoplayDirection;
+                }
+            }, intervalTime);
+        }
+
+        function stopAutoplay() {
+            if (state.autoplayInterval) {
+                clearInterval(state.autoplayInterval);
+                state.autoplayInterval = null;
+            }
+        }
+        
+        // Escuchador para detener el autoplay si el usuario sale de pantalla completa manualmente
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && state.isAutoplaying) {
+        toggleAutoplay();
+    } else if (!document.fullscreenElement) {
+        document.body.classList.remove('fullscreen-mode');
+    }
+});
+        // --- FIN DE LAS FUNCIONES DE PANTALLA COMPLETA Y AUTOPLAY MODIFICADAS ---
 
         function calculateOverlaps(services) {
             const layout = [];
@@ -900,14 +1023,13 @@
         function createEventBlocks(service) {
             if (service.start === undefined) return {};
             const statusClass = `status-${(service.estado || 'Otros').replace(/\s+/g, '-')}`;
-            // Sanitizar tipoServicio para la clase CSS
             const typeClass = service.tipoServicio ? `type-${service.tipoServicio.replace(/\s+/g, '-')}` : ''; 
             
             const serviceTop = ((service.start / 60) - CALENDAR_START_HOUR) * PIXELS_PER_HOUR;
             const serviceHeight = Math.max(((service.end - service.start) / 60) * PIXELS_PER_HOUR, 15);
             
             const serviceBlock = document.createElement('div');
-            serviceBlock.className = `event-block ${statusClass} ${typeClass}`; // Añadido typeClass aquí
+            serviceBlock.className = `event-block ${statusClass} ${typeClass}`;
             Object.assign(serviceBlock.style, { top: `${serviceTop}px`, height: `${serviceHeight}px`, ...service.style });
             serviceBlock.innerHTML = `
                 <strong>${service.cliente || 'N/A'}</strong>
@@ -925,7 +1047,7 @@
                     const travelHeight = (travelDurationMinutes / 60) * PIXELS_PER_HOUR;
                     const travelTop = serviceTop - travelHeight;
                     travelBlock = document.createElement('div');
-                    travelBlock.className = `travel-block ${statusClass} ${typeClass}`; // Añadido typeClass aquí también
+                    travelBlock.className = `travel-block ${statusClass} ${typeClass}`;
                     Object.assign(travelBlock.style, { top: `${travelTop}px`, height: `${travelHeight}px`, ...service.style });
                     travelBlock.innerHTML = `Traslado`;
                     travelBlock.dataset.serviceId = service.id;
@@ -942,7 +1064,6 @@
                 return;
             }
             const today = new Date();
-            // Asegúrate de que today sea una fecha "local" para la comparación
             const todayYYYYMMDD = getYYYYMMDD(today);
             const currentCalendarYYYYMMDD = getYYYYMMDD(state.currentCalendarDate);
 
@@ -951,7 +1072,6 @@
                 return;
             }
             const setPosition = () => {
-                // Usa la hora local actual
                 const now = new Date();
                 const minutes = now.getHours() * 60 + now.getMinutes();
                 const headerHeight = document.querySelector('.technician-header')?.offsetHeight || 53;
@@ -965,21 +1085,24 @@
                 }
             };
             setPosition();
-            state.currentTimeInterval = setInterval(setPosition, 60000); // Actualizar cada minuto
+            state.currentTimeInterval = setInterval(setPosition, 60000);
         }
         
         function getWeekStartDate(date) {
             const d = new Date(date);
-            // El día de la semana de JS es 0 (domingo) a 6 (sábado)
-            // Queremos que la semana comience el lunes (1).
-            const dayOfWeek = d.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-            const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Si es domingo (0), resta 6 para ir al lunes anterior, si no, resta dayOfWeek - 1
+            const dayOfWeek = d.getDay();
+            const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             const weekStart = new Date(d.getFullYear(), d.getMonth(), diff);
-            weekStart.setHours(0,0,0,0); // Asegurar que sea el inicio del día
+            weekStart.setHours(0,0,0,0);
             return weekStart;
         }
         
         function switchView(view) {
+            // UPDATED to stop autoplay when switching views
+            if (state.isAutoplaying) {
+                toggleAutoplay(); // This will stop it and reset the button
+            }
+            
             state.currentView = view;
             render();
             ui.viewDayBtn.classList.toggle('active', view === 'day');
@@ -992,13 +1115,13 @@
             } else {
                 state.currentCalendarDate.setDate(state.currentCalendarDate.getDate() - 7);
             }
-            updateDatePicker(); // Sincroniza el input date
+            updateDatePicker();
             render();
         });
 
         ui.todayBtn.addEventListener('click', () => {
-            state.currentCalendarDate = new Date(); // Establece la fecha actual (local)
-            updateDatePicker(); // Sincroniza el input date
+            state.currentCalendarDate = new Date();
+            updateDatePicker();
             render();
         });
 
@@ -1008,13 +1131,12 @@
             } else {
                 state.currentCalendarDate.setDate(state.currentCalendarDate.getDate() + 7);
             }
-            updateDatePicker(); // Sincroniza el input date
+            updateDatePicker();
             render();
         });
         
         ui.datePicker.addEventListener('change', () => { 
             const dateParts = ui.datePicker.value.split('-').map(Number);
-            // Creamos la fecha usando el constructor que interpreta como hora local
             state.currentCalendarDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
             render(); 
         });
@@ -1034,10 +1156,6 @@
 
         function openModal(modalId, service) {
             const m = ui.modal;
-            // Para mostrar la fecha y hora de Chile Continental:
-            // new Date().toLocaleString() utiliza la zona horaria del navegador.
-            // Para asegurar "Chile Continental", puedes especificar la opción 'timeZone'.
-            // Sin embargo, si el usuario ya está en Chile, 'es-CL' debería ser suficiente.
             const formatTimestamp = (ts) => ts ? ts.toDate().toLocaleString('es-CL', {timeZone: 'America/Santiago'}) : 'N/A';
             
             m.reqNum.textContent = `Detalles: Req #${service.numRequerimiento || 'N/A'}`;
@@ -1046,7 +1164,6 @@
             m.direccion.textContent = service.direccion || 'N/A';
             m.vendedor.textContent = service.vendedor ? service.vendedor.split('@')[0] : 'N/A';
             m.estado.textContent = service.estado || 'N/A';
-            // Monto y Tipo de Servicio en el modal
             m.montoServicio.textContent = displayCurrency(service.montoServicio);
             m.tipoServicio.textContent = service.tipoServicio || 'N/A';
             const tecnicos = Array.isArray(service.tecnicos) ? service.tecnicos.join(', ') : (service.tecnico || 'Sin Asignar');
