@@ -12,54 +12,6 @@
             --font-main: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             --transition-speed: 0.3s;
         }
-/* Asegura que el contenido del body ocupe todo el espacio en pantalla completa */
-body:-webkit-full-screen,
-body:-moz-full-screen,
-body:-ms-fullscreen,
-body:fullscreen {
-    padding: 0 !important;
-    margin: 0 !important;
-}
-/* Estilos para el modo de pantalla completa */
-.fullscreen-mode .header-controls,
-.fullscreen-mode .calendar-controls,
-.fullscreen-mode #filter-controls,
-.fullscreen-mode .search-action-buttons,
-.fullscreen-mode .search-service-input,
-.fullscreen-mode #current-date-display,
-.fullscreen-mode .card {
-    display: none !important;
-}
-
-.fullscreen-mode .container {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-    height: 100vh !important;
-}
-
-.fullscreen-mode #daily-view-container .calendar-scroll-container,
-.fullscreen-mode #weekly-view-container .week-grid-container {
-    max-height: 100vh !important;
-    border-radius: 0 !important;
-}
-
-.container {
-    max-width: 100%;
-    padding: 0;
-    margin: 0;
-    height: 100vh;
-}
-.header-controls {
-    border-radius: 0;
-    margin-bottom: 0;
-}
-
-/* Y para que el calendario en sí se expanda, aseguramos que sus contenedores tengan altura 100% */
-#daily-view-container .calendar-scroll-container,
-#weekly-view-container .week-grid-container {
-    max-height: calc(100vh - 60px); /* Ajusta este valor para dejar espacio al encabezado */
-}
         [data-theme="dark"] {
             --bg-primary: #1a1b26; --bg-secondary: #24283b; --bg-tertiary: #414868;
             --text-primary: #c0caf5; --text-secondary: #a9b1d6; --accent: #7dcfff;
@@ -231,8 +183,8 @@ body:fullscreen {
         }
         .week-grid-header, .week-grid-tech-cell, .week-grid-day-cell {
             padding: 0.6rem;
-            border-right: 1.5px solid var(--border-color);
-            border-bottom: 1.5px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
         }
         .week-grid-header {
             text-align: center; font-weight: 600; color: var(--text-primary);
@@ -468,9 +420,9 @@ body:fullscreen {
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyA9tUGGmMqk85Hljw8H1XoTfX2U5iQu85c",
-            authDomain: "control-de-servicios-b8e34.firebaseapp.com",
-            projectId: "control-de-servicios-b8e34",
+          apiKey: "AIzaSyA9tUGGmMqk85Hljw8H1XoTfX2U5iQu85c",
+          authDomain: "control-de-servicios-b8e34.firebaseapp.com",
+          projectId: "control-de-servicios-b8e34",
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -701,6 +653,7 @@ body:fullscreen {
             const uniqueDates = [...new Set(matchingServices.map(s => s.fechaAsignada))]
                                 .filter(date => date)
                                 .sort(); 
+
             state.foundServiceDates = uniqueDates;
 
             if (state.foundServiceDates.length > 0) {
@@ -907,42 +860,16 @@ body:fullscreen {
             gridContainer.addEventListener('click', handleEventClick);
         }
         
-        // --- NUEVAS FUNCIONES PARA PANTALLA COMPLETA Y AUTOPLAY MODIFICADAS ---
-function toggleFullscreen(element) {
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    } else {
-        if (element && element.requestFullscreen) {
-            element.requestFullscreen();
-        } else if (element && element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-        } else if (element && element.msRequestFullscreen) {
-            element.msRequestFullscreen();
+        // --- NEW AUTOPLAY FUNCTIONS ---
+        function toggleAutoplay() {
+            state.isAutoplaying = !state.isAutoplaying;
+            ui.autoplayBtn.classList.toggle('active', state.isAutoplaying);
+            if (state.isAutoplaying) {
+                startAutoplay();
+            } else {
+                stopAutoplay();
+            }
         }
-    }
-}
-
-function toggleAutoplay() {
-    state.isAutoplaying = !state.isAutoplaying;
-    ui.autoplayBtn.classList.toggle('active', state.isAutoplaying);
-    document.body.classList.toggle('fullscreen-mode', state.isAutoplaying);
-
-    const calendarContainer = state.currentView === 'day' ? 
-        document.querySelector('#daily-view-container .calendar-scroll-container') : 
-        document.querySelector('#weekly-view-container .week-grid-container');
-
-    if (state.isAutoplaying) {
-        startAutoplay();
-        if (calendarContainer) {
-            toggleFullscreen(calendarContainer);
-        }
-    } else {
-        stopAutoplay();
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        }
-    }
-}
 
         function startAutoplay() {
             stopAutoplay(); // Ensure no multiple intervals are running
@@ -984,16 +911,7 @@ function toggleAutoplay() {
                 state.autoplayInterval = null;
             }
         }
-        
-        // Escuchador para detener el autoplay si el usuario sale de pantalla completa manualmente
-document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && state.isAutoplaying) {
-        toggleAutoplay();
-    } else if (!document.fullscreenElement) {
-        document.body.classList.remove('fullscreen-mode');
-    }
-});
-        // --- FIN DE LAS FUNCIONES DE PANTALLA COMPLETA Y AUTOPLAY MODIFICADAS ---
+        // --- END OF NEW AUTOPLAY FUNCTIONS ---
 
         function calculateOverlaps(services) {
             const layout = [];
