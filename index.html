@@ -380,6 +380,12 @@ a.req-link:hover {
             <div style="text-align: center; margin-top: 1rem;">
                 <label for="search-service-input" style="display: none;">Buscar Servicio</label>
                 <input type="search" id="search-service-input" placeholder="Buscar por Nº Req, Nº NV o Cliente...">
+                <button id="voice-search-btn" class="icon-btn" style="width: auto; justify-content: center; margin-left: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/>
+                        <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+                    </svg>
+                </button>
                 <div class="search-action-buttons">
                     <button id="search-go-btn" class="icon-btn" style="width: 100%; justify-content: center;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.085.12l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.12-.085zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>
@@ -554,6 +560,7 @@ a.req-link:hover {
         setupCalendar(); 
         setupFilters();
         addSearchListeners();
+        setupVoiceSearch(); 
         ui.autoplayBtn.addEventListener('click', toggleAutoplay);
         ui.filterTipoServicio.addEventListener('change', () => {
             render();
@@ -668,16 +675,73 @@ a.req-link:hover {
         });
     }
     
+    // Función para configurar la búsqueda por voz
+    function setupVoiceSearch() {
+        const voiceSearchBtn = document.getElementById('voice-search-btn');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-CL';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                voiceSearchBtn.classList.add('active');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                ui.searchServiceInput.value = transcript;
+                performSearch(transcript, true);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Error en el reconocimiento de voz:", event.error);
+                voiceSearchBtn.classList.remove('active');
+            };
+
+            recognition.onend = () => {
+                voiceSearchBtn.classList.remove('active');
+            };
+
+            voiceSearchBtn.addEventListener('click', () => {
+                if (voiceSearchBtn.classList.contains('active')) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+        } else {
+            voiceSearchBtn.style.display = 'none';
+            console.warn('Web Speech API no es compatible con este navegador.');
+        }
+    }
+    
+    // Función para normalizar texto, se pone aquí para que sea reutilizable
+    const normalizeText = (text) => {
+        if (!text) return '';
+        return text
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+    };
+
     function performSearch(term, navigateToFirst = true) {
         state.searchTerm = term;
         state.foundServiceDates = [];
 
-        const matchingServices = state.serviciosCache.filter(s => {
-            return (s.numRequerimiento && s.numRequerimiento.toLowerCase().includes(term)) ||
-                   (s.numNV && s.numNV.toLowerCase().includes(term)) ||
-                   (s.cliente && s.cliente.toLowerCase().includes(term));
-        });
+        const termNormalized = normalizeText(term);
 
+        const matchingServices = state.serviciosCache.filter(s => {
+            const reqNormalized = normalizeText(s.numRequerimiento);
+            const nvNormalized = normalizeText(s.numNV);
+            const clienteNormalized = normalizeText(s.cliente);
+
+            return (reqNormalized.includes(termNormalized)) ||
+                   (nvNormalized.includes(termNormalized)) ||
+                   (clienteNormalized.includes(termNormalized));
+        });
+        
         const uniqueDates = [...new Set(matchingServices.map(s => s.fechaAsignada))]
                             .filter(date => date)
                             .sort(); 
@@ -694,7 +758,7 @@ a.req-link:hover {
             ui.searchNextBtn.style.display = 'none';
             render();
         }
-    }
+    }    
     
     function getYYYYMMDD(date) {
         const year = date.getFullYear();
@@ -762,11 +826,17 @@ a.req-link:hover {
         if (!state.searchTerm) {
             return services;
         }
-        const term = state.searchTerm;
+
+        const termNormalized = normalizeText(state.searchTerm);
+        
         return services.filter(s => {
-            return (s.numRequerimiento && s.numRequerimiento.toLowerCase().includes(term)) ||
-                   (s.numNV && s.numNV.toLowerCase().includes(term)) ||
-                   (s.cliente && s.cliente.toLowerCase().includes(term));
+            const reqNormalized = normalizeText(s.numRequerimiento);
+            const nvNormalized = normalizeText(s.numNV);
+            const clienteNormalized = normalizeText(s.cliente);
+
+            return (reqNormalized.includes(termNormalized)) ||
+                   (nvNormalized.includes(termNormalized)) ||
+                   (clienteNormalized.includes(termNormalized));
         });
     }
 
